@@ -2,6 +2,7 @@ import pandas as pd
 import math as m
 from bleak import BleakScanner
 import asyncio
+import xlsxwriter
 
 class xDot:
     def __init__(self, path):
@@ -28,6 +29,20 @@ class xDot:
     async def scanner(self):
         async with BleakScanner() as scanner:
             self.devices = await scanner.discover()
-            
-        #if __name__ == "__main__":
-        #    asyncio.run(scanner())
+            for dev in self.devices:
+                print(dev)
+
+    def writeData(self):
+        workbook = xlsxwriter.Workbook("Data.xlsx")
+        sheet = workbook.add_worksheet("Data")
+
+        for x in range(len(self.df.loc[:,"Quat_W"])): 
+            q0 = float(self.df.loc[x,"Quat_W"])
+            sheet.write(1, x, q0)
+            q1 = float(self.df.loc[x,"Quat_X"])
+            sheet.write(2, x, q1)
+            q2 = float(self.df.loc[x,"Quat_Y"])
+            sheet.write(3, x, q2)
+            q3 = float(self.df.loc[x,"Quat_Z"])
+            sheet.write(4, x, q3)
+        workbook.close()

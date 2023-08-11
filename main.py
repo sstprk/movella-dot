@@ -2,7 +2,7 @@ from vpython import *
 from funcs import xDot
 import asyncio
 
-tools = xDot("C:\\Users\\Salih\Desktop\\left-upper-leg_D422CD037F_20210622_173151.xlsx")
+tools = xDot("C:\\Users\\Salih\Desktop\\Data\\left-upper-leg_D422CD037F_20210622_173151.xlsx")
 
 scene.range = 5
 scene.background = color.white
@@ -22,6 +22,7 @@ xdot = box(width=1, length=1, height=0.5, opacity=0.8, pos=vector(0,0,0))
 
 roll, pitch, yaw = tools.qToeu()
 
+
 for i in range(len(yaw)):
     rate(60)
     k=vector(cos(yaw[i])*cos(pitch[i]), sin(pitch[i]),sin(yaw[i])*cos(pitch[i]))
@@ -40,7 +41,4 @@ for i in range(len(yaw)):
     frontArrow.length=1
     upArrow.length=1
 
-if __name__ == "__main__":
-    asyncio.run(tools.scanner())
-print(tools.devices)
 
