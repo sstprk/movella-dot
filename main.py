@@ -22,7 +22,6 @@ xdot = box(width=1, length=1, height=0.5, opacity=0.8, pos=vector(0,0,0))
 
 roll, pitch, yaw = tools.qToeu()
 
-
 for i in range(len(yaw)):
     rate(60)
     k=vector(cos(yaw[i])*cos(pitch[i]), sin(pitch[i]),sin(yaw[i])*cos(pitch[i]))
@@ -41,4 +40,23 @@ for i in range(len(yaw)):
     frontArrow.length=1
     upArrow.length=1
 
-
+"""
+while True:
+    roll, pitch, yaw = tools.qToeu()
+    rate(60)
+    k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
+    y=vector(0,1,0)
+    s=cross(k,y)
+    v=cross(s,k)
+    vrot=v*cos(roll)+cross(k,v)*sin(roll)
+ 
+    frontArrow.axis=k
+    sideArrow.axis=cross(k,vrot)
+    upArrow.axis=vrot
+    xdot.axis=k
+    xdot.up=vrot
+    
+    sideArrow.length=1
+    frontArrow.length=1
+    upArrow.length=1
+"""

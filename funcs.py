@@ -32,17 +32,15 @@ class xDot:
             for dev in self.devices:
                 print(dev)
 
-    def writeData(self):
+    def writeData(self, qW, qX, qY, qZ, idx):
         workbook = xlsxwriter.Workbook("Data.xlsx")
         sheet = workbook.add_worksheet("Data")
-
-        for x in range(len(self.df.loc[:,"Quat_W"])): 
-            q0 = float(self.df.loc[x,"Quat_W"])
-            sheet.write(1, x, q0)
-            q1 = float(self.df.loc[x,"Quat_X"])
-            sheet.write(2, x, q1)
-            q2 = float(self.df.loc[x,"Quat_Y"])
-            sheet.write(3, x, q2)
-            q3 = float(self.df.loc[x,"Quat_Z"])
-            sheet.write(4, x, q3)
+        q0 = float(qW)
+        sheet.write(idx, 0, q0)
+        q1 = float(qX)
+        sheet.write(idx, 1, q1)
+        q2 = float(qY)
+        sheet.write(idx, 2, q2)
+        q3 = float(qZ)
+        sheet.write(idx, 3, q3)
         workbook.close()
