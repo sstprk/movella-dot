@@ -1,7 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep  6 11:59:42 2023
+
+@author: Salih
+"""
 from vpython import *
 from xdpchandler import *
 import funcs
-
+import movelladot_pc_sdk
 
 if __name__ == "__main__":
     xdpcHandler = XdpcHandler()
@@ -30,19 +36,30 @@ if __name__ == "__main__":
             print(f.label())
 
         print(f"Current profile: {device.onboardFilterProfile().label()}")
+        print()
         if device.setOnboardFilterProfile("General"):
             print("Successfully set profile to General")
         else:
             print("Setting filter profile failed!")
-
-        print("Setting quaternion CSV output")
-        device.setLogOptions(movelladot_pc_sdk.XsLogOptions_Quaternion)
-
-        logFileName = "logfile_" + device.bluetoothAddress().replace(':', '-') + ".csv"
-        print(f"Enable logging to: {logFileName}")
-        if not device.enableLogging(logFileName):
-            print(f"Failed to enable logging. Reason: {device.lastResultText()}")
-
+        
+        #Logging option
+        while(True):
+            inpt = input("Logging data on/off?") 
+            if inpt == "on":
+                print("Setting quaternion Excel output")
+                device.setLogOptions(movelladot_pc_sdk.XsLogOptions_Quaternion)
+        
+                logFileName = "logfile_" + device.bluetoothAddress().replace(':', '-') + ".xlsx"
+                print(f"Enable logging to: {logFileName}")
+                if not device.enableLogging(logFileName):
+                    print(f"Failed to enable logging. Reason: {device.lastResultText()}")
+                break
+            elif inpt == "off":
+                print("Disabled logging")
+                break
+            else:
+                print("Warning! Pick one setting.")
+            
         print("Putting device into measurement mode.")
         if not device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationQuaternion):
             print(f"Could not put device into measurement mode. Reason: {device.lastResultText()}")
@@ -51,13 +68,18 @@ if __name__ == "__main__":
 if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationQuaternion):
     scene.range = 5
     scene.background = color.white
-    
     scene.width = 950
     scene.height = 700
     
-    xarrow = arrow(length=10, shaftwidth=.01, color=color.green, axis=vector(1,0,0))
-    yarrow = arrow(length=10, shaftwidth=.01, color=color.red, axis=vector(0,1,0))
-    zarrow = arrow(length=10, shaftwidth=.01, color=color.blue, axis=vector(0,0,1))
+    xarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(1,0,0))
+    negxarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(-1,0,0))
+    labelx = label(pos=vector(3,0,0), text="X", box=0, line=0)
+    yarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(0,1,0))
+    negyarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(0,-1,0))
+    labely = label(pos=vector(0,3,0), text="Y", box=0, line=0)
+    zarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(0,0,1))
+    negzarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(0,0,-1))
+    labelz = label(pos=vector(0,0,3), text="Z", box=0, line=0)
     
     frontArrow=arrow(length=4,shaftwidth=.05,color=color.purple,axis=vector(1,0,0))
     upArrow=arrow(length=1,shaftwidth=.05,color=color.magenta,axis=vector(0,1,0))
@@ -69,36 +91,26 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationQuaternion
         # Retrieve a packet
         device.resetOrientation(movelladot_pc_sdk.XRM_Heading)
         print("Orientation resetting")
-        
-    while True:
+    while(True):
         for device in xdpcHandler.connectedDots():
             packet = xdpcHandler.getNextPacket(device.portInfo().bluetoothAddress())
             if packet != None:
                 if packet.containsOrientation():
                     quat = packet.orientationQuaternion()
                     roll, pitch, yaw = funcs.xDot.qToeu(quat[0], quat[1], quat[2], quat[3])
-        """if not orientationResetDone and (movelladot_pc_sdk.XsTimeStamp_nowMs() - startTime) % 5000 == 0:
-            for device in xdpcHandler.connectedDots():
-                print(f"\nResetting heading for device {device.portInfo().bluetoothAddress()}: ", end="", flush=True)
-                if device.resetOrientation(movelladot_pc_sdk.XRM_Heading):
-                    print("OK", end="", flush=True)
-                else:
-                    print(f"NOK: {device.lastResultText()}", end="", flush=True)
-            print("\n", end="", flush=True)"""
-        rate(60)
-        k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
-        y=vector(0,1,0)
-        s=cross(k,y)
-        v=cross(s,k)
-        vrot=v*cos(roll)+cross(k,v)*sin(roll)
-        
-        frontArrow.axis=k
-        sideArrow.axis=cross(k,vrot)
-        upArrow.axis=vrot
-        xdot.axis=k
-        xdot.up=vrot
-            
-        sideArrow.length=1
-        frontArrow.length=1
-        upArrow.length=1
+                    rate(60)
+                    k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
+                    y=vector(0,1,0)
+                    s=cross(k,y)
+                    v=cross(s,k)
+                    vrot=v*cos(roll)+cross(k,v)*sin(roll)
+                    
+                    frontArrow.axis=k
+                    sideArrow.axis=cross(k,vrot)
+                    upArrow.axis=vrot
+                    xdot.axis=k
+                    xdot.up=vrot
     
+                    sideArrow.length=1
+                    frontArrow.length=1
+                    upArrow.length=1

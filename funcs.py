@@ -1,7 +1,8 @@
 import math as m
-
+import xdpchandler
+import movelladot_pc_sdk
 class xDot:
-    def __init__(self, path):
+    def __init__(self):
         pass
 
     def qToeu(q0, q1, q2, q3):
