@@ -63,9 +63,10 @@ if __name__ == "__main__":
         print("Putting device into measurement mode.")
         if not device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationQuaternion):
             print(f"Could not put device into measurement mode. Reason: {device.lastResultText()}")
-            continue
+            xdpcHandler.cleanup()
+            exit(-1)
 
-if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationQuaternion):
+if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
     scene.range = 5
     scene.background = color.white
     scene.width = 950
@@ -97,7 +98,8 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationQuaternion
             if packet != None:
                 if packet.containsOrientation():
                     quat = packet.orientationQuaternion()
-                    roll, pitch, yaw = funcs.xDot.qToeu(quat[0], quat[1], quat[2], quat[3])
+                    roll, pitch, yaw = funcs.xDot.qToOri(quat[0], quat[1], quat[2], quat[3])
+                    
                     rate(60)
                     k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
                     y=vector(0,1,0)
@@ -114,3 +116,11 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationQuaternion
                     sideArrow.length=1
                     frontArrow.length=1
                     upArrow.length=1
+                    
+                    k = keysdown()
+                    
+                    if "esc" in k:
+                        print("Disconnecting..")
+                        xdpcHandler.cleanup()
+                        exit(-1)
+                        
