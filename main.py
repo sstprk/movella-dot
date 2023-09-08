@@ -46,10 +46,10 @@ if __name__ == "__main__":
         while(True):
             inpt = input("Logging data on/off?") 
             if inpt == "on":
-                print("Setting quaternion Excel output")
+                print("Setting quaternion CSV output")
                 device.setLogOptions(movelladot_pc_sdk.XsLogOptions_Quaternion)
         
-                logFileName = "logfile_" + device.bluetoothAddress().replace(':', '-') + ".xlsx"
+                logFileName = "logfile_" + device.bluetoothAddress().replace(':', '-') + ".csv"
                 print(f"Enable logging to: {logFileName}")
                 if not device.enableLogging(logFileName):
                     print(f"Failed to enable logging. Reason: {device.lastResultText()}")
@@ -61,7 +61,7 @@ if __name__ == "__main__":
                 print("Warning! Pick one setting.")
             
         print("Putting device into measurement mode.")
-        if not device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationQuaternion):
+        if not device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
             print(f"Could not put device into measurement mode. Reason: {device.lastResultText()}")
             xdpcHandler.cleanup()
             exit(-1)
@@ -72,21 +72,21 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
     scene.width = 950
     scene.height = 700
     
-    xarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(1,0,0))
-    negxarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(-1,0,0))
+    xarrow = arrow(length=100, shaftwidth=.03, color=color.black, axis=vector(1,0,0))
+    negxarrow = arrow(length=100, shaftwidth=.03, color=color.black, axis=vector(-1,0,0))
     labelx = label(pos=vector(3,0,0), text="X", box=0, line=0)
-    yarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(0,1,0))
-    negyarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(0,-1,0))
+    yarrow = arrow(length=100, shaftwidth=.03, color=color.black, axis=vector(0,1,0))
+    negyarrow = arrow(length=100, shaftwidth=.03, color=color.black, axis=vector(0,-1,0))
     labely = label(pos=vector(0,3,0), text="Y", box=0, line=0)
-    zarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(0,0,1))
-    negzarrow = arrow(length=1000, shaftwidth=.03, color=color.black, axis=vector(0,0,-1))
+    zarrow = arrow(length=100, shaftwidth=.03, color=color.black, axis=vector(0,0,1))
+    negzarrow = arrow(length=100, shaftwidth=.03, color=color.black, axis=vector(0,0,-1))
     labelz = label(pos=vector(0,0,3), text="Z", box=0, line=0)
     
     frontArrow=arrow(length=4,shaftwidth=.05,color=color.purple,axis=vector(1,0,0))
     upArrow=arrow(length=1,shaftwidth=.05,color=color.magenta,axis=vector(0,1,0))
     sideArrow=arrow(length=2,shaftwidth=.05,color=color.orange,axis=vector(0,0,1))
     
-    xdot = box(width=1, length=1, height=0.5, opacity=0.8, pos=vector(0,0,0))
+    xdot = box(width=1, length=2, height=0.5, opacity=0.8, pos=vector(0,0,0))
     
     for device in xdpcHandler.connectedDots():
         # Retrieve a packet
@@ -118,6 +118,10 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
                     upArrow.length=1
                     
                     k = keysdown()
+                    
+                    if "r" in k:
+                        device.resetOrientation(movelladot_pc_sdk.XRM_Heading)
+                        print("Orientation resetting")
                     
                     if "esc" in k:
                         print("Disconnecting..")
