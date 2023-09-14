@@ -30,17 +30,17 @@ if __name__ == "__main__":
         exit(-1)
 
     for device in xdpcHandler.connectedDots():
-        filterProfiles = device.getAvailableFilterProfiles()
-        print("Available filter profiles:")
-        for f in filterProfiles:
-            print(f.label())
 
         print(f"Current profile: {device.onboardFilterProfile().label()}")
-        print()
         if device.setOnboardFilterProfile("General"):
             print("Successfully set profile to General")
         else:
             print("Setting filter profile failed!")
+            print("Trying again..")
+            if device.setOnboardFilterProfile("General"):
+                print("Successfully set profile to General")
+            else:
+                print("Setting filter profile failed!")
         
         #Logging option
         while(True):
