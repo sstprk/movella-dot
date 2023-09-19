@@ -6,8 +6,9 @@ Created on Wed Sep  6 11:59:42 2023
 """
 from vpython import *
 from xdpchandler import *
-import funcs
+from funcs import xDot
 import movelladot_pc_sdk
+from scipy.integrate import cumtrapz
 
 if __name__ == "__main__":
     xdpcHandler = XdpcHandler()
@@ -92,39 +93,72 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
         # Retrieve a packet
         device.resetOrientation(movelladot_pc_sdk.XRM_Heading)
         print("Orientation resetting")
-    while(True):
-        for device in xdpcHandler.connectedDots():
-            packet = xdpcHandler.getNextPacket(device.portInfo().bluetoothAddress())
-            if packet != None:
-                if packet.containsOrientation():
-                    quat = packet.orientationQuaternion()
-                    roll, pitch, yaw = funcs.xDot.qToOri(quat[0], quat[1], quat[2], quat[3])
-                    
-                    rate(60)
-                    k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
-                    y=vector(0,1,0)
-                    s=cross(k,y)
-                    v=cross(s,k)
-                    vrot=v*cos(roll)+cross(k,v)*sin(roll)
-                    
-                    frontArrow.axis=k
-                    sideArrow.axis=cross(k,vrot)
-                    upArrow.axis=vrot
-                    xdot.axis=k
-                    xdot.up=vrot
-    
-                    sideArrow.length=1
-                    frontArrow.length=1
-                    upArrow.length=1
-                    
-                    k = keysdown()
-                    
-                    if "r" in k:
-                        device.resetOrientation(movelladot_pc_sdk.XRM_Heading)
-                        print("Orientation resetting")
-                    
-                    if "esc" in k:
-                        print("Disconnecting..")
-                        xdpcHandler.cleanup()
-                        exit(-1)
+    try:
+        startingAccx = 0
+        startingAccy = 0
+        startingAccz = 0
+        startingtime = 1
+        while(True):
+            for device in xdpcHandler.connectedDots():
+                packet = xdpcHandler.getNextPacket(device.portInfo().bluetoothAddress())
+                if packet != None:
+                    if packet.containsOrientation() or packet.containsAcceleration():
+                        acc = packet.freeAcceleration()
+                        position = []
                         
+                        time = [startingtime-1, startingtime]
+                        
+                        atempx = [startingAccx, acc[0]]
+                        startingAccx = acc[0] 
+                        vx = cumtrapz(atempx, time, initial=0)
+                        px = cumtrapz(vx, time)
+                        
+                        atempy = [startingAccy, acc[1]]
+                        startingAccy = acc[1] 
+                        vy = cumtrapz(atempy, time, initial=0)
+                        py = cumtrapz(vy, time)
+                        
+                        atempz = [startingAccz, acc[2]]
+                        startingAccz = acc[2] 
+                        vz = cumtrapz(atempz, time, initial=0)
+                        pz = cumtrapz(vz, time)
+                        
+                        startingtime += 1
+                        
+                        quat = packet.orientationQuaternion()
+                        roll, pitch, yaw = xDot.qToOri(quat[0], quat[1], quat[2], quat[3])
+                        
+                        rate(120)
+                        xdot.pos.x = px
+                        xdot.pos.y = py
+                        xdot.pos.z = pz
+                        k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
+                        y=vector(0,1,0)
+                        s=cross(k,y)
+                        v=cross(s,k)
+                        vrot=v*cos(roll)+cross(k,v)*sin(roll)
+                        
+                        frontArrow.axis=k
+                        sideArrow.axis=cross(k,vrot)
+                        upArrow.axis=vrot
+                        xdot.axis=k
+                        xdot.up=vrot
+        
+                        sideArrow.length=1
+                        frontArrow.length=1
+                        upArrow.length=1
+                        
+                        k = keysdown()
+                        
+                        if "r" in k:
+                            device.resetOrientation(movelladot_pc_sdk.XRM_Heading)
+                            print("Orientation resetting")
+                        
+                        if "esc" in k:
+                            print("Disconnecting..")
+                            xdpcHandler.cleanup()
+                            exit(-1)
+    except:
+        print("Disconnecting..")
+        xdpcHandler.cleanup()
+        exit(-1)                        
