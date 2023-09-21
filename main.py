@@ -84,10 +84,10 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
     labelz = label(pos=vector(0,0,3), text="Z", box=0, line=0)
     
     frontArrow=arrow(length=4,shaftwidth=.05,color=color.purple,axis=vector(1,0,0))
-    upArrow=arrow(length=1,shaftwidth=.05,color=color.magenta,axis=vector(0,1,0))
+    upArrow=arrow(length=1,shaftwidth=.05,color=color.magenta,axis=vector(0,-1,0))
     sideArrow=arrow(length=2,shaftwidth=.05,color=color.orange,axis=vector(0,0,1))
     
-    xdot = box(width=1, length=2, height=0.5, opacity=0.8, pos=vector(0,0,0))
+    xdot = box(width=1, length=1.5, height=0.5, opacity=0.8, pos=vector(0,0,0))
     
     for device in xdpcHandler.connectedDots():
         # Retrieve a packet
@@ -98,28 +98,32 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
         startingAccy = 0
         startingAccz = 0
         startingtime = 1
+        posx = 0
+        posy = 0
+        posz = 0
         while(True):
             for device in xdpcHandler.connectedDots():
                 packet = xdpcHandler.getNextPacket(device.portInfo().bluetoothAddress())
                 if packet != None:
                     if packet.containsOrientation() or packet.containsAcceleration():
                         acc = packet.freeAcceleration()
-                        position = []
                         
-                        time = [startingtime-1, startingtime]
+                        time = [startingtime, startingtime-1]
                         
-                        atempx = [startingAccx, acc[0]]
-                        startingAccx = acc[0] 
+                        print(acc)
+                        
+                        atempx = [acc[1], startingAccx]
+                        startingAccx = acc[1] 
                         vx = cumtrapz(atempx, time, initial=0)
                         px = cumtrapz(vx, time)
                         
-                        atempy = [startingAccy, acc[1]]
-                        startingAccy = acc[1] 
+                        atempy = [acc[2], startingAccy]
+                        startingAccy = acc[2] 
                         vy = cumtrapz(atempy, time, initial=0)
                         py = cumtrapz(vy, time)
                         
-                        atempz = [startingAccz, acc[2]]
-                        startingAccz = acc[2] 
+                        atempz = [acc[0], startingAccz]
+                        startingAccz = acc[0] 
                         vz = cumtrapz(atempz, time, initial=0)
                         pz = cumtrapz(vz, time)
                         
@@ -128,10 +132,17 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
                         quat = packet.orientationQuaternion()
                         roll, pitch, yaw = xDot.qToOri(quat[0], quat[1], quat[2], quat[3])
                         
+                        if acc[1] > 0.5 or acc[1] < -0.5:
+                            posx += px
+                        if acc[2] > 0.5 or acc[2] < -0.5:
+                            posy += py
+                        if acc[0] > 0.5 or acc[0] < -0.5:
+                            posz += pz
+                        
                         rate(120)
-                        xdot.pos.x = px
-                        xdot.pos.y = py
-                        xdot.pos.z = pz
+                        xdot.pos.x = posx
+                        xdot.pos.y = posy
+                        xdot.pos.z = posz
                         k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
                         y=vector(0,1,0)
                         s=cross(k,y)
@@ -151,6 +162,7 @@ if device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion):
                         k = keysdown()
                         
                         if "r" in k:
+                            posz = posy = posx = 0
                             device.resetOrientation(movelladot_pc_sdk.XRM_Heading)
                             print("Orientation resetting")
                         
